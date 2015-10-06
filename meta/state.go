@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"math/rand"
 	"os"
 	"path/filepath"
@@ -342,6 +343,7 @@ func (r *localRaft) peers() ([]string, error) {
 
 func (r *localRaft) leader() string {
 	if r.raft == nil {
+		log.Println("localRaft has no underlying raft")
 		return ""
 	}
 
@@ -463,6 +465,7 @@ func (r *remoteRaft) initialize() error {
 
 func (r *remoteRaft) leader() string {
 	if len(r.store.peers) == 0 {
+		log.Println("remoteRaft store has zero peers")
 		return ""
 	}
 
