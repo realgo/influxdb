@@ -23,6 +23,7 @@ It has these top-level messages:
 	CreateNodeCommand
 	DeleteNodeCommand
 	CreateDatabaseCommand
+	RemovePeerCommand
 	DropDatabaseCommand
 	CreateRetentionPolicyCommand
 	DropRetentionPolicyCommand
@@ -118,6 +119,7 @@ const (
 	Command_SetAdminPrivilegeCommand         Command_Type = 18
 	Command_UpdateNodeCommand                Command_Type = 19
 	Command_RenameDatabaseCommand            Command_Type = 20
+	Command_RemovePeerCommand                Command_Type = 21
 )
 
 var Command_Type_name = map[int32]string{
@@ -141,6 +143,7 @@ var Command_Type_name = map[int32]string{
 	18: "SetAdminPrivilegeCommand",
 	19: "UpdateNodeCommand",
 	20: "RenameDatabaseCommand",
+	21: "RemovePeerCommand",
 }
 var Command_Type_value = map[string]int32{
 	"CreateNodeCommand":                1,
@@ -163,6 +166,7 @@ var Command_Type_value = map[string]int32{
 	"SetAdminPrivilegeCommand":         18,
 	"UpdateNodeCommand":                19,
 	"RenameDatabaseCommand":            20,
+	"RemovePeerCommand":                21,
 }
 
 func (x Command_Type) Enum() *Command_Type {
@@ -675,6 +679,38 @@ var E_CreateDatabaseCommand_Command = &proto.ExtensionDesc{
 	Field:         103,
 	Name:          "internal.CreateDatabaseCommand.command",
 	Tag:           "bytes,103,opt,name=command",
+}
+
+type RemovePeerCommand struct {
+	ID               *uint64 `protobuf:"varint,1,req,name=ID" json:"ID,omitempty"`
+	Addr             *string `protobuf:"bytes,2,req,name=Addr" json:"Addr,omitempty"`
+	XXX_unrecognized []byte  `json:"-"`
+}
+
+func (m *RemovePeerCommand) Reset()         { *m = RemovePeerCommand{} }
+func (m *RemovePeerCommand) String() string { return proto.CompactTextString(m) }
+func (*RemovePeerCommand) ProtoMessage()    {}
+
+func (m *RemovePeerCommand) GetID() uint64 {
+	if m != nil && m.ID != nil {
+		return *m.ID
+	}
+	return 0
+}
+
+func (m *RemovePeerCommand) GetAddr() string {
+	if m != nil && m.Addr != nil {
+		return *m.Addr
+	}
+	return ""
+}
+
+var E_RemovePeerCommand_Command = &proto.ExtensionDesc{
+	ExtendedType:  (*Command)(nil),
+	ExtensionType: (*RemovePeerCommand)(nil),
+	Field:         121,
+	Name:          "internal.RemovePeerCommand.command",
+	Tag:           "bytes,121,opt,name=command",
 }
 
 type DropDatabaseCommand struct {
@@ -1424,15 +1460,11 @@ func (m *JoinRequest) GetAddr() string {
 }
 
 type JoinResponse struct {
-	Header *ResponseHeader `protobuf:"bytes,1,req,name=Header" json:"Header,omitempty"`
-	// Indicates that this node should take part in the raft cluster.
-	EnableRaft *bool `protobuf:"varint,2,opt,name=EnableRaft" json:"EnableRaft,omitempty"`
-	// The addresses of raft peers to use if joining as a raft member. If not joining
-	// as a raft member, these are the nodes running raft.
-	RaftNodes []string `protobuf:"bytes,3,rep,name=RaftNodes" json:"RaftNodes,omitempty"`
-	// The node ID assigned to the requesting node.
-	NodeID           *uint64 `protobuf:"varint,4,opt,name=NodeID" json:"NodeID,omitempty"`
-	XXX_unrecognized []byte  `json:"-"`
+	Header           *ResponseHeader `protobuf:"bytes,1,req,name=Header" json:"Header,omitempty"`
+	EnableRaft       *bool           `protobuf:"varint,2,opt,name=EnableRaft" json:"EnableRaft,omitempty"`
+	RaftNodes        []string        `protobuf:"bytes,3,rep,name=RaftNodes" json:"RaftNodes,omitempty"`
+	NodeID           *uint64         `protobuf:"varint,4,opt,name=NodeID" json:"NodeID,omitempty"`
+	XXX_unrecognized []byte          `json:"-"`
 }
 
 func (m *JoinResponse) Reset()         { *m = JoinResponse{} }
@@ -1473,6 +1505,7 @@ func init() {
 	proto.RegisterExtension(E_CreateNodeCommand_Command)
 	proto.RegisterExtension(E_DeleteNodeCommand_Command)
 	proto.RegisterExtension(E_CreateDatabaseCommand_Command)
+	proto.RegisterExtension(E_RemovePeerCommand_Command)
 	proto.RegisterExtension(E_DropDatabaseCommand_Command)
 	proto.RegisterExtension(E_CreateRetentionPolicyCommand_Command)
 	proto.RegisterExtension(E_DropRetentionPolicyCommand_Command)

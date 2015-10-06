@@ -106,6 +106,7 @@ message Command {
 		SetAdminPrivilegeCommand         = 18;
 		UpdateNodeCommand                = 19;
 		RenameDatabaseCommand            = 20;
+		RemovePeerCommand                = 21;
     }
 
     required Type type = 1;
@@ -133,6 +134,16 @@ message CreateDatabaseCommand {
     }
 	required string Name = 1;
 }
+
+message RemovePeerCommand {
+    extend Command {
+        optional RemovePeerCommand command = 121;
+    }
+	required uint64 ID = 1;
+	required string Addr = 2;
+}
+
+
 
 message DropDatabaseCommand {
     extend Command {
