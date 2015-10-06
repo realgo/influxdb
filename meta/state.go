@@ -347,7 +347,12 @@ func (r *localRaft) leader() string {
 		return ""
 	}
 
-	return r.raft.Leader()
+	l := r.raft.Leader()
+	if l == "" {
+		log.Println("localRaft was unable to determine a leader???")
+	}
+
+	return l
 }
 
 func (r *localRaft) isLeader() bool {
