@@ -401,6 +401,75 @@ func (s *Store) enableRemoteRaft() error {
 	return s.changeState(rr)
 }
 
+// monitorPeerHealth periodically checks if we have a node that can be promoted to a
+// raft peer to fill any missing slots.
+// This function runs in a separate goroutine.
+func (s *Store) monitorPeerHealth() {
+	defer s.wg.Done()
+
+	ticker := time.NewTicker(1 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		// Wait for next tick or timeout.
+		select {
+		case <-ticker.C:
+		case <-s.closing:
+			return
+		}
+		if err := s.promoteRandomNodeToPeer(); err != nil {
+			s.Logger.Printf("error promoting random node to raft peer: %s", err)
+		}
+
+		//Need to see if we were promoted, but still have a local raft.
+		//if err := s.enabledLocalRaftIfNecessary(); err != nil {
+		//s.Logger.Printf("error changing raft state: %s", err)
+		//}
+	}
+}
+
+func (s *Store) promoteRandomNodeToPeer() error {
+	// Only do this if you are the leader
+	if s.IsLeader() {
+		s.mu.Lock()
+		defer s.mu.Unlock()
+
+		//if s.raftState == nil {
+		//return nil
+		//}
+
+		//peers, err := s.raftState.peers()
+		//if err != nil {
+		//return err
+		//}
+
+		//nodes := s.data.Nodes
+		//var nonraft []NodeInfo
+		//for _, n := range nodes {
+		//if contains(peers, n.Host) {
+		//continue
+		//}
+		//nonraft = append(nonraft, n)
+		//}
+
+		//// Check to see if any action is required or possible
+		//if len(peers) >= 3 || len(nonraft) == 0 {
+		//return nil
+		//}
+
+		//// Get a random node
+		//n := nonraft[rand.Intn(len(nonraft))]
+		//s.Logger.Printf("attempting to promote node %d addr %s to raft peer", n.ID, n.Host)
+		//if err := s.raftState.addPeer(n.Host); err != nil {
+		//s.Logger.Printf("error adding raft peer: %s", err)
+		//} else {
+		//s.Logger.Printf("promoted node %d addr %s to raft peer", n.ID, n.Host)
+		//return nil
+		//}
+	}
+	return nil
+}
+
 func (s *Store) enabledLocalRaftIfNecessary() error {
 	s.mu.RLock()
 	if s.raftState == nil {
@@ -438,33 +507,6 @@ func (s *Store) enabledLocalRaftIfNecessary() error {
 	s.mu.RUnlock()
 
 	return s.enableLocalRaft()
-}
-
-// monitorPeerHealth periodically checks if we have a node that can be promoted to a
-// raft peer to fill any missing slots.
-// This function runs in a separate goroutine.
-func (s *Store) monitorPeerHealth() {
-	defer s.wg.Done()
-
-	ticker := time.NewTicker(1 * time.Second)
-	defer ticker.Stop()
-
-	for {
-		// Wait for next tick or timeout.
-		select {
-		case <-ticker.C:
-		case <-s.closing:
-			return
-		}
-		if err := s.promoteRandomNodeToPeer(); err != nil {
-			s.Logger.Printf("error promoting random node to raft peer: %s", err)
-		}
-
-		//Need to see if we were promoted, but still have a local raft.
-		if err := s.enabledLocalRaftIfNecessary(); err != nil {
-			s.Logger.Printf("error changing raft state: %s", err)
-		}
-	}
 }
 
 func (s *Store) changeState(state raftState) error {
@@ -934,48 +976,6 @@ func (s *Store) Database(name string) (di *DatabaseInfo, err error) {
 		return nil
 	})
 	return
-}
-
-func (s *Store) promoteRandomNodeToPeer() error {
-	// Only do this if you are the leader
-	if s.IsLeader() {
-		s.mu.Lock()
-		defer s.mu.Unlock()
-
-		if s.raftState == nil {
-			return nil
-		}
-
-		peers, err := s.raftState.peers()
-		if err != nil {
-			return err
-		}
-
-		nodes := s.data.Nodes
-		var nonraft []NodeInfo
-		for _, n := range nodes {
-			if contains(peers, n.Host) {
-				continue
-			}
-			nonraft = append(nonraft, n)
-		}
-
-		// Check to see if any action is required or possible
-		if len(peers) >= 3 || len(nonraft) == 0 {
-			return nil
-		}
-
-		// Get a random node
-		n := nonraft[rand.Intn(len(nonraft))]
-		s.Logger.Printf("attempting to promote node %d addr %s to raft peer", n.ID, n.Host)
-		if err := s.raftState.addPeer(n.Host); err != nil {
-			s.Logger.Printf("error adding raft peer: %s", err)
-		} else {
-			s.Logger.Printf("promoted node %d addr %s to raft peer", n.ID, n.Host)
-			return nil
-		}
-	}
-	return nil
 }
 
 // Databases returns a list of all databases.
