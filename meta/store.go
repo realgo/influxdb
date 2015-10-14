@@ -14,7 +14,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
-	"runtime"
+	"runtime/debug"
 	"strconv"
 	"strings"
 	"sync"
@@ -1656,9 +1656,7 @@ func (s *Store) remoteExec(b []byte) error {
 	if leader == "" {
 		log.Println("remoteExec raftState has no leader")
 		// Lets dump a stack to see what is going on here.
-		var buf []byte
-		runtime.Stack(buf, false)
-		fmt.Println(string(buf))
+		debug.PrintStack()
 		return errors.New("no leader detected during remoteExec")
 	}
 
