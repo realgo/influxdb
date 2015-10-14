@@ -422,50 +422,52 @@ func (s *Store) monitorPeerHealth() {
 		}
 
 		//Need to see if we were promoted, but still have a local raft.
-		//if err := s.enabledLocalRaftIfNecessary(); err != nil {
-		//s.Logger.Printf("error changing raft state: %s", err)
-		//}
+		if err := s.enabledLocalRaftIfNecessary(); err != nil {
+			s.Logger.Printf("error changing raft state: %s", err)
+		}
 	}
 }
 
 func (s *Store) promoteRandomNodeToPeer() error {
 	// Only do this if you are the leader
+	log.Printf("promoteRandomNodeToPeer IsLeader check incoming %s", s.Addr.String())
 	if s.IsLeader() {
 		s.mu.Lock()
 		defer s.mu.Unlock()
 
-		//if s.raftState == nil {
-		//return nil
-		//}
+		if s.raftState == nil {
+			return nil
+		}
 
-		//peers, err := s.raftState.peers()
-		//if err != nil {
-		//return err
-		//}
+		log.Printf("promoteRandomNodeToPeer s.raftState.peers() check incoming %s", s.Addr.String())
+		peers, err := s.raftState.peers()
+		if err != nil {
+			return err
+		}
 
-		//nodes := s.data.Nodes
-		//var nonraft []NodeInfo
-		//for _, n := range nodes {
-		//if contains(peers, n.Host) {
-		//continue
-		//}
-		//nonraft = append(nonraft, n)
-		//}
+		nodes := s.data.Nodes
+		var nonraft []NodeInfo
+		for _, n := range nodes {
+			if contains(peers, n.Host) {
+				continue
+			}
+			nonraft = append(nonraft, n)
+		}
 
-		//// Check to see if any action is required or possible
-		//if len(peers) >= 3 || len(nonraft) == 0 {
-		//return nil
-		//}
+		// Check to see if any action is required or possible
+		if len(peers) >= 3 || len(nonraft) == 0 {
+			return nil
+		}
 
-		//// Get a random node
-		//n := nonraft[rand.Intn(len(nonraft))]
-		//s.Logger.Printf("attempting to promote node %d addr %s to raft peer", n.ID, n.Host)
-		//if err := s.raftState.addPeer(n.Host); err != nil {
-		//s.Logger.Printf("error adding raft peer: %s", err)
-		//} else {
-		//s.Logger.Printf("promoted node %d addr %s to raft peer", n.ID, n.Host)
-		//return nil
-		//}
+		// Get a random node
+		n := nonraft[rand.Intn(len(nonraft))]
+		s.Logger.Printf("attempting to promote node %d addr %s to raft peer", n.ID, n.Host)
+		if err := s.raftState.addPeer(n.Host); err != nil {
+			s.Logger.Printf("error adding raft peer: %s", err)
+		} else {
+			s.Logger.Printf("promoted node %d addr %s to raft peer", n.ID, n.Host)
+			return nil
+		}
 	}
 	return nil
 }
@@ -478,6 +480,7 @@ func (s *Store) enabledLocalRaftIfNecessary() error {
 	}
 	s.mu.RUnlock()
 
+	log.Printf("enableLocalRaftIfNecessary s.Peers() check incoming %s", s.Addr.String())
 	peers, err := s.Peers()
 	if err != nil {
 		return err
