@@ -1654,7 +1654,7 @@ func (s *Store) remoteExec(b []byte) error {
 	// Retrieve the current known leader.
 	leader := s.raftState.leader()
 	if leader == "" {
-		log.Println("remoteExec raftState has no leader")
+		log.Printf("remoteExec raftState has no leader for addr: %s", s.Addr.String())
 		// Lets dump a stack to see what is going on here.
 		debug.PrintStack()
 		return errors.New("no leader detected during remoteExec")
