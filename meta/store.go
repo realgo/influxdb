@@ -473,13 +473,6 @@ func (s *Store) promoteRandomNodeToPeer() error {
 }
 
 func (s *Store) enabledLocalRaftIfNecessary() error {
-	s.mu.RLock()
-	if s.raftState == nil {
-		s.mu.RUnlock()
-		return nil
-	}
-	s.mu.RUnlock()
-
 	log.Printf("enableLocalRaftIfNecessary s.Peers() check incoming %s", s.Addr.String())
 	peers, err := s.Peers()
 	if err != nil {
@@ -488,7 +481,7 @@ func (s *Store) enabledLocalRaftIfNecessary() error {
 
 	// If there is only one peer there is nothing to do, as it is acting
 	// in single raft mode
-	if len(peers) == 1 {
+	if len(peers) <= 1 {
 		return nil
 	}
 
@@ -730,7 +723,10 @@ func (s *Store) AddPeer(addr string) error {
 func (s *Store) Peers() ([]string, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	return s.raftState.peers()
+	if s.raftState != nil {
+		return s.raftState.peers()
+	}
+	return []string{}, nil
 }
 
 // serveExecListener processes remote exec connections.
