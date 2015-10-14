@@ -14,12 +14,12 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/gogo/protobuf/proto"
 	"github.com/hashicorp/raft"
 	"github.com/influxdb/influxdb/influxql"
@@ -1655,7 +1655,10 @@ func (s *Store) remoteExec(b []byte) error {
 	leader := s.raftState.leader()
 	if leader == "" {
 		log.Println("remoteExec raftState has no leader")
-		spew.Dump(s.raftState)
+		// Lets dump a stack to see what is going on here.
+		var buf []byte
+		runtime.Stack(buf, false)
+		fmt.Println(string(buf))
 		return errors.New("no leader detected during remoteExec")
 	}
 
